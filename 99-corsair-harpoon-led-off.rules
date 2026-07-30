@@ -1,0 +1,2 @@
+# Import USB properties, then select only the Harpoon's ff42:0001 command interface.
+ACTION=="add", SUBSYSTEM=="hidraw", IMPORT{builtin}="usb_id", ENV{ID_VENDOR_ID}=="1b1c", ENV{ID_MODEL_ID}=="1b5e", ENV{ID_USB_INTERFACE_NUM}=="01", TAG+="systemd", ENV{SYSTEMD_WANTS}+="corsair-harpoon-led-off@%k.service"
