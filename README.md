@@ -35,6 +35,27 @@ systemctl status 'corsair-harpoon-led-off@*'
 journalctl -u 'corsair-harpoon-led-off@*'
 ```
 
+## Persistent pointer speed under Xorg
+
+Installation also adds an Xorg `InputClass` configuration that replaces these
+per-session `xinput` settings:
+
+- Direct Harpoon Gaming Mouse: `AccelSpeed` `-1.0`
+- Harpoon Wireless USB Receiver: `AccelSpeed` `-0.8`
+- Slipstream Wireless USB Receiver: `AccelSpeed` `-0.8`
+
+Xorg applies the setting whenever a matching pointer appears. Restart the Xorg
+session after installation; subsequent reboots and device reconnections do not
+require an `xinput` script. Verify the active value with:
+
+```sh
+xinput list-props "Corsair CORSAIR HARPOON RGB WIRELESS Gaming Mouse" \
+    | grep 'libinput Accel Speed'
+```
+
+The configuration is specific to Xorg. A native Wayland session would require
+the equivalent setting in its compositor instead.
+
 For a one-time manual test, find the Harpoon entry whose USB interface number is
 `01`, then run the helper as root:
 
