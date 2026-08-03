@@ -20,9 +20,14 @@ make
 sudo make install
 sudo systemctl daemon-reload
 sudo udevadm control --reload-rules
+sudo systemctl enable --now corsair-harpoon-led-off-trigger.service
 ```
 
-Then unplug and reconnect the mouse, or trigger the already-present interface:
+The enabled oneshot replays hidraw events late in each boot. This is necessary
+when the mouse is discovered in the initramfs before the installed udev rule and
+system service are available. It also handles the already-present interface at
+installation time. Alternatively, unplug and reconnect the mouse or trigger it
+manually:
 
 ```sh
 sudo udevadm trigger --action=add --subsystem-match=hidraw
@@ -85,6 +90,7 @@ OpenRGB or ckb-next; they use the same vendor command channel.
 Uninstall with:
 
 ```sh
+sudo systemctl disable --now corsair-harpoon-led-off-trigger.service
 sudo make uninstall
 sudo systemctl daemon-reload
 sudo udevadm control --reload-rules

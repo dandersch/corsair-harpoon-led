@@ -1,0 +1,10 @@
+[Unit]
+Description=Replay hidraw events for Corsair Harpoon LED setup
+After=systemd-udev-trigger.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/udevadm trigger --action=add --subsystem-match=hidraw --settle
+
+[Install]
+WantedBy=multi-user.target
