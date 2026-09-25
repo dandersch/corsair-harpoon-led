@@ -45,18 +45,71 @@ journalctl -u 'corsair-harpoon-led-off@*'
 Installation also adds an Xorg `InputClass` configuration that replaces these
 per-session `xinput` settings:
 
-- Direct Harpoon Gaming Mouse: `AccelSpeed` `-1.0`
+- Direct Harpoon Gaming Mouse: `AccelSpeed` `-0.9` (manually tested)
 - Harpoon Wireless USB Receiver: `AccelSpeed` `-0.8`
 - Slipstream Wireless USB Receiver: `AccelSpeed` `-0.8`
 
+All three entries explicitly keep `TransformationMatrix` at identity,
+`1 0 0 0 1 0 0 0 1`. The previous 2× transform reproducibly breaks
+Chromium/X11 pointer lock; do not use it for sensitivity.
+
+The wired mouse was manually tuned from `-1.0` to `-0.9` with an identity
+matrix and felt acceptable. Keep hardware DPI at the value used during that
+trial and leave the acceleration profile unchanged; do not also double DPI.
+The receiver speeds remain unchanged and have not been retuned.
+
+Libinput speed ranges from `-1.0` (minimum, not neutral) to `1.0`. There is no
+universal value equivalent to the old post-acceleration 2× transform.
+Hardware DPI is an alternative if supported, not an additional adjustment
+to stack on this tuned setting. This helper does not read, set, or persist
+DPI, and DPI/profile support on the connected mouse has not been verified.
+Remove any per-session `xinput` or desktop autostart overrides that would
+overwrite these settings.
+
+To update only the pointer configuration without touching the LED service:
+
+```sh
+sudo install -Dm644 90-corsair-harpoon-pointer.conf \
+    /etc/X11/xorg.conf.d/90-corsair-harpoon-pointer.conf
+```
+
 Xorg applies the setting whenever a matching pointer appears. Restart the Xorg
 session after installation; subsequent reboots and device reconnections do not
-require an `xinput` script. Verify the active value with:
+require an `xinput` script. Restarting the LED service does not apply pointer
+settings. Verify the active values with:
 
 ```sh
 xinput list-props "Corsair CORSAIR HARPOON RGB WIRELESS Gaming Mouse" \
-    | grep 'libinput Accel Speed'
+    | grep -E 'libinput Accel Speed|Coordinate Transformation Matrix'
 ```
+
+For the direct mouse, expect speed `-0.900000`
+and matrix `1, 0, 0, 0, 1, 0, 0, 0, 1` (displayed with decimal places).
+
+For a live adjustment before restarting Xorg, use the active pointer's name
+or device ID from `xinput list` (the example below is the direct/wired mouse):
+
+```sh
+xinput set-prop "Corsair CORSAIR HARPOON RGB WIRELESS Gaming Mouse" \
+    "Coordinate Transformation Matrix" 1 0 0 0 1 0 0 0 1
+```
+
+Apply the tuned speed with DPI left at the value used during the trial:
+
+```sh
+xinput set-prop "Corsair CORSAIR HARPOON RGB WIRELESS Gaming Mouse" \
+    "libinput Accel Speed" -0.9
+```
+
+These live changes are temporary; persist the chosen speed in the Xorg file
+and install it using the command above. Log out of the Xorg session and back
+in to apply the file to a new X server (a reboot also works). No systemd
+service restart, `daemon-reload`, udev reload, helper rebuild, or full
+`make install` is needed for this pointer-only change. Leave the running
+LED-off service alone. If a separate vendor configuration tool is needed
+for DPI, do not run it concurrently with the LED helper; stop the active
+`corsair-harpoon-led-off@hidrawN.service` instance first, close the vendor
+tool afterward, then start that same instance again.
 
 The configuration is specific to Xorg. A native Wayland session would require
 the equivalent setting in its compositor instead.
